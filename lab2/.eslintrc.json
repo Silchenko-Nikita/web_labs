@@ -16,7 +16,7 @@
     },
     "env" : {
         "es6": true,
-        "noade": true,
+        "node": true,
         "browser": true
     }
 }

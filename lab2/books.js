@@ -23,7 +23,7 @@ const validators = {
 let print = console.log;
 
 function isDate(val) {
-    return !isNaN(Date.parse(val))
+    return !isNaN(Date.parse(val));
 }
 
 // function getNextId() {
@@ -73,7 +73,7 @@ function validate_el_for_update(el) {
                     return null;
                 }
                 if (validators[key]){
-                    for (val of validators[key]){
+                    for (let val of validators[key]){
                         if (!val(el[key])) return null;
                     }
                 }
@@ -94,14 +94,14 @@ function validate_el_for_create(data, el) {
                 return null;
             }
             if (validators[key]){
-                for (val of validators[key]){
+                for (let val of validators[key]){
                     if (!val(el[key])) return null;
                 }
             }
         }
     }
 
-    if (data.find((e, i, a) => e[id] === el[id])) {
+    if (data.find((e) => e[id] === el[id])) {
         return null;
     }
 
@@ -118,7 +118,7 @@ function getAll() {
 function getById(x_id) {
     return getAll()
         .then(function (data) {
-            return data.find((e, i, a) => e[id] === x_id);
+            return data.find((e) => e[id] === x_id);
         });
 }
 
@@ -144,7 +144,7 @@ function create(x) {
 function update(x) {
     return getAll()
         .then(function (data) {
-            let el = data.find((e, i, a) => e[id] === x[id]);
+            let el = data.find((e) => e[id] === x[id]);
             x = validate_el_for_update(x);
             if (el && x){
                 for (let key in el){
@@ -175,17 +175,17 @@ function remove(x_id) {
                 return null;
             }
             updateFile(data, );
-            return el_arr[0]
+            return el_arr[0];
         });
 }
 
 function updateFile(els) {
-    return fs.writeFile(data_file, JSON.stringify(els))
+    return fs.writeFile(data_file, JSON.stringify(els));
 }
 
-function print_res(pr) {
-    pr.then(res => print(res))
-}
+// function print_res(pr) {
+//     pr.then(res => print(res));
+// }
 
 function askQuestion(nl=true) {
     process.stdout.write((nl ? '-----\n': '') + 'Enter your command (type "help" for help): ');
@@ -211,24 +211,24 @@ function processInput(buffer) {
         askQuestion();
     }
     else if (inputString === "get all") {
-        getAll().then(el => print(el)).then(_ => askQuestion())
+        getAll().then(el => print(el)).then(() => askQuestion())
             .catch(err => print(err));
 
     } else if (inputString.match(/^remove id=\d+$/)) {
         let id = parseInt(inputString.substring(inputString.indexOf('=') + 1));
-        remove(id).then(el => print(el ? ('Removed:' + el) : 'Invalid id')).then(_ => askQuestion())
+        remove(id).then(el => print(el ? ('Removed:' + el) : 'Invalid id')).then(() => askQuestion())
             .catch(err => print(err));
 
     } else if (inputString.match(/^get id=\d+$/)) {
         let id = parseInt(inputString.substring(inputString.indexOf('=') + 1));
-        getById(id).then(el => print(el ? el: 'Invalid id')).then(_ => askQuestion())
+        getById(id).then(el => print(el ? el: 'Invalid id')).then(() => askQuestion())
             .catch(err => print(err));
 
     } else if (inputString.match(/^update .+$/)) {
         try {
             let el = JSON.parse(inputString.substring(inputString.indexOf(' ') + 1));
             update(el).then(res => print(res !== INVALID_DATA_ERR_CODE ? 'Success': 'Invalid input'))
-                .then(_ => askQuestion())
+                .then(() => askQuestion())
                 .catch(err => print(err));
         } catch (e){
             print("Invalid input");
@@ -239,7 +239,7 @@ function processInput(buffer) {
         try {
             let el = JSON.parse(inputString.substring(inputString.indexOf(' ') + 1));
             create(el).then(res => print(res !== INVALID_DATA_ERR_CODE ? 'Success': 'Invalid input'))
-                .then(_ => askQuestion())
+                .then(() => askQuestion())
                 .catch(err => print(err));
         } catch (e){
             print("Invalid input");
