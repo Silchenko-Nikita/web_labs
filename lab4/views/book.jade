@@ -15,6 +15,7 @@ html
                 a.w3-bar-item.w3-button(href='/') Головна
                 .w3-right.w3-hide-small
                     a.w3-bar-item.w3-button(href='/books/') Список книг
+                    a.w3-bar-item.w3-button(href='/books/add') Додати книгу
                     a.w3-bar-item.w3-button(href='/#about') Інфо
         nav.w3-sidebar.w3-hide-medium.w3-hide-small(style='width:40%; padding-top: 54px; z-index: -1;')
             img(src='/images/books/#{book["tag"]}.jpg', style='width:100%;height:99%')
@@ -51,3 +52,6 @@ html
                     b Опис
                 .w3-medium
                     div= book["descr"]
+
+                form.w3-right-align(style='padding-top: 16px;', method='post', action='/books/' + book_id + '/delete')
+                    input.w3-button.w3-round.w3-red(type='submit', value='Видалити')

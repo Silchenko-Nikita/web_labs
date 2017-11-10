@@ -4,12 +4,21 @@ let favicon = require('serve-favicon');
 let logger = require('morgan');
 let cookieParser = require('cookie-parser');
 let bodyParser = require('body-parser');
+let bcrypt = require('bcrypt-nodejs');
+let mongoose = require('mongoose');
+const passport = require('passport');
 
 let index = require('./routes/index');
 let books = require('./routes/books');
 let users = require('./routes/users');
 
 let app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(passport.initialize());
+app.use(passport.session());
+
+mongoose.connect('mongodb://nikitos:funnycats@ds149855.mlab.com:49855/heroku_s1fzsv21', { useMongoClient: true });
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -37,6 +46,8 @@ app.get('/books/sample_book',function(req,res){
 
 });
 
+
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
@@ -56,3 +67,4 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+module.passport = passport;

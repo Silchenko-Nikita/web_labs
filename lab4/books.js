@@ -1,6 +1,6 @@
 const fs = require('fs-promise');
 
-const data_file = 'books.json';
+const data_file = 'public/data/books.json';
 const id = 'id';
 // const metadata_file = '.books_meta.json';
 

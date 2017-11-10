@@ -6,16 +6,24 @@ html
     link(rel='shortcut icon', href='/images/books/sample.png')
     style.
         body h1,h2,h3,h4,h5,h6 {
-        "Montserrat", sans-serif
+            "Montserrat", sans-serif
         }
     body
         .w3-top
             .w3-bar.w3-light-grey.w3-white.w3-padding.w3-card-2(style='letter-spacing:4px;')
                 a.w3-bar-item.w3-button(href='/') Головна
                 .w3-right.w3-hide-small
+                    a.w3-bar-item.w3-button(href='/books/add') Додати книгу
                     a.w3-bar-item.w3-button(href='/#about') Інфо
         .w3-padding-32
         .w3-content
+            form(style='padding-left: 16px; padding-right: 16px;', method='get')
+                input.w3-input.w3-col.s6.w3-border(type='text', value=search, name='search')
+                input.w3-button.w3-col.s3.w3-light-grey.w3-border(type='submit', value='Шукати')
+                .w3-right-align
+                    a(href='/books/add')
+                        input.w3-button.w3-green.w3-border.w3-round(type='button', value='Додати')
+
             for book in books
                 .w3-row.w3-margin
                     .w3-quarter
@@ -25,3 +33,9 @@ html
                         h2
                             a(href='/books/' + book['id'] + '/')= book['name']
                         p= book['descr']
+
+            .w3-bar.w3-center(style='padding-bottom: 8px;')
+                if (has_prev_page)
+                    a.w3-button.w3-light-grey.w3-border.w3-round(href='?search=' + search + '&p=' + (page - 1))  «
+                if (has_next_page)
+                    a.w3-button.w3-light-grey.w3-border.w3-round(href='?search=' + search + '&p=' + (page + 1)) »
