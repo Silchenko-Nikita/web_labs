@@ -168,14 +168,14 @@ function update(x) {
 function remove(x_id) {
     return getAll()
         .then(function (data){
-            return [data.filter(el => el[id] !== x_id), data.filter(el => el[id] === x_id)];
-        })
-        .then(function (data, el_arr) {
-            if (!el_arr){
+            let neq = data.filter(el => el[id] !== x_id);
+            let eq = data.filter(el => el[id] === x_id);
+
+            if (!eq){
                 return null;
             }
-            updateFile(data, );
-            return el_arr[0];
+            updateFile(neq);
+            return eq[0]
         });
 }
 
