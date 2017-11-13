@@ -16,6 +16,10 @@ html
                 .w3-right.w3-hide-small
                     a.w3-bar-item.w3-button(href='/books/') Список книг
                     a.w3-bar-item.w3-button(href='/books/add') Додати книгу
+                    if (username)
+                        a.w3-bar-item.w3-button(href='/logout') Вийти (#{username})
+                    else
+                        a.w3-bar-item.w3-button(href='/login') Увійти
                     a.w3-bar-item.w3-button(href='/#about') Інфо
         nav.w3-sidebar.w3-hide-medium.w3-hide-small(style='width:40%; padding-top: 54px; z-index: -1;')
             img(src='/images/books/#{book["tag"]}.jpg', style='width:100%;height:99%')

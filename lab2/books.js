@@ -180,7 +180,7 @@ function remove(x_id) {
 }
 
 function updateFile(els) {
-    return fs.writeFile(data_file, JSON.stringify(els));
+    return fs.writeFile(data_file, JSON.stringify(els, null, 4));
 }
 
 // function print_res(pr) {

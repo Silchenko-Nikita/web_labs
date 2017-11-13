@@ -3,11 +3,13 @@ let books_utils = require('../books');
 let router = express.Router();
 let fs = require('fs');
 let multer = require('multer');
+let users = require('./users');
+let User = users.User;
+let render = users.render;
 const books_images_dir = 'public/images/books';
 
-
 /* GET home page. */
-router.get('/books', function(req, res, next) {
+router.get('/books', users.checkAuth, function(req, res, next) {
   books_utils.getAll().then( books => {
     let search = req.query.search || '';
     let page = parseInt(req.query.p) || 0;
@@ -32,22 +34,23 @@ router.get('/books', function(req, res, next) {
       books = books.slice(begin, end);
     }
 
-    res.render('books', { books: books, search: search, page: page,
-      has_prev_page: has_prev_page, has_next_page: has_next_page })
+    render(req, res, 'books', { books: books, search: search, page: page,
+        has_prev_page: has_prev_page, has_next_page: has_next_page });
   });
 });
 
 
-router.get('/books/add', function(req, res, next) {
-  res.render('add_book');
+router.get('/books/add', users.checkAuth, function(req, res, next) {
+  render(req, res, 'add_book', {});
 });
 
 
-router.get('/books/:id', function(req, res, next) {
+router.get('/books/:id', users.checkAuth, function(req, res, next) {
 
   books_utils.getById(parseInt(req.params.id)).then( book =>{
     if (book){
-      res.render('book', { book: book, book_id: req.params.id });
+
+      render(req, res, 'book', { book: book, book_id: req.params.id });
     } else {
       res.status(404).send('Not found');
     }})
@@ -74,10 +77,16 @@ function imgsFilter(req, file, callback) {
 let img_upload = multer({storage: imgs_storage, fileFilter: imgsFilter}).single('img');
 
 router.post('/books/add', img_upload, function(req, res, next) {
+  let user = req.user;
+  let username = null;
+  if (user) {
+    username = user.username;
+  }
+
   let img = req.file;
 
   if (!img){
-    res.render('add_book', { err: "Файл повинен мати формати jpg, png або jpeg" });
+    render(req, res, 'add_book', { err: "Файл повинен мати формати jpg, png або jpeg" });
     return res
   }
 
@@ -93,7 +102,7 @@ router.post('/books/add', img_upload, function(req, res, next) {
     }
 
     if (id === 0){
-      res.render('add_book', { err: "Виникла помилка на сервері" });
+      render(req, res, 'add_book', { err: "Виникла помилка на сервері" });
       return res
     }
 
@@ -115,27 +124,34 @@ router.post('/books/add', img_upload, function(req, res, next) {
 
     books_utils.create(new_book).then(function (result) {
       if (result === 1){
-        res.render('add_book', { err: "Неправильні дані" });
+        render(req, res, 'add_book', { err: "Неправильні дані" });
         return res
       } else {
         let msg = 'Книга "' + new_book['name'] + '" була успішно додана';
-        res.render('msg', { msg:  msg });
+        render(req, res, 'msg', { msg:  msg });
         return res
       }
     }).catch(function (err) {
-      res.render('add_book', { err: "Виникла помилка на сервері" });
+      render(req, res, 'add_book', { err: "Виникла помилка на сервері" });
       return res
     });
   });
 });
 
 
-router.post('/books/:id/delete', function(req, res, next) {
+router.post('/books/:id/delete', users.checkAuth, function(req, res, next) {
+  let user = req.user;
+  let username = null;
+  if (user) {
+    username = user.username;
+  }
+
   books_utils.remove(parseInt(req.params.id)).then( book =>{
     let msg = 'Книга "' + book['name'] + '" була успішно видалена';
-    res.render('msg', { msg:  msg });
+    render(req, res, 'msg', { msg:  msg });
     return res
   })
 });
+
 
 module.exports = router;

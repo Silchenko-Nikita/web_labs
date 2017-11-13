@@ -15,11 +15,15 @@ html
                 a.w3-bar-item.w3-button(href='/') Головна
                 .w3-right.w3-hide-small
                     a.w3-bar-item.w3-button(href='/books/') Список книг
+                    if (username)
+                        a.w3-bar-item.w3-button(href='/logout') Вийти (#{username})
+                    else
+                        a.w3-bar-item.w3-button(href='/login') Увійти
                     a.w3-bar-item.w3-button(href='/#about') Інфо
         .w3-padding-32
         .w3-content
             div.w3-center
-                b Форма для реєстрації
+                h5 Форма для реєстрації
             form(method='post')
                 div.w3-row(style="padding-bottom: 4px;")
                 .w3-row(style="padding-bottom: 4px;")

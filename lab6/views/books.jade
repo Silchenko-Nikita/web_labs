@@ -14,6 +14,10 @@ html
                 a.w3-bar-item.w3-button(href='/') Головна
                 .w3-right.w3-hide-small
                     a.w3-bar-item.w3-button(href='/books/add') Додати книгу
+                    if (username)
+                        a.w3-bar-item.w3-button(href='/logout') Вийти (#{username})
+                    else
+                        a.w3-bar-item.w3-button(href='/login') Увійти
                     a.w3-bar-item.w3-button(href='/#about') Інфо
         .w3-padding-32
         .w3-content

@@ -1,7 +1,21 @@
 let express = require('express');
-let router = express.Router();
-let passport = express.passport;
+let mongoose = require('mongoose');
+let passport = require('passport');
+let passportLocalMongoose = require('passport-local-mongoose');
+let bcrypt = require('bcrypt-nodejs');
 
+function render(req, res, viewname, extra) {
+  User.findOne({ _id: req.user }, function(err, user) {
+    extra = extra || {};
+    if (user) {
+      extra.username = user.username;
+    }
+    res.render(viewname, extra);
+  });
+}
+
+let router = express.Router();
+mongoose.connect('mongodb://nikitos:funnycats@ds149855.mlab.com:49855/heroku_s1fzsv21', { useMongoClient: true });
 
 const REGULAR_USER = 1;
 const ADMIN_USER = 2;
@@ -12,33 +26,19 @@ let userSchema = new mongoose.Schema({
   type: Number
 });
 
+userSchema.plugin(passportLocalMongoose);
 let User = mongoose.model('user', userSchema);
 
-
-// визначає, яку інформацію зберігати у Cookie сесії
-passport.serializeUser(function(user, done) {
-  // наприклад, зберегти у Cookie сесії id користувача
-  done(null, user._id);
-});
-
-// отримує інформацію (id) із Cookie сесії і шукає користувача, що їй відповідає
-passport.deserializeUser(function(id, done) {
-  User.findOne({id: id}, function(err, user) {
-
-    done(null, user._id);
-
-  });
-});
-
-// налаштування стратегії для визначення користувача, що виконує логін
-// на основі його username та password
-passport.use(new LocalStrategy((username, password, done) => {
-  User.findOne({username: username, pass: password }, function(err, user) {
-
-    done(null, user._id);
-
-  });
-}));
+// User.remove({}).then(x => console.log(x));
+// User.find({}).then(x => console.log(x));
+// let user = new User(
+//   {
+//     username: 'admin',
+//     pass: generateHash('admin'),
+//     type: ADMIN_USER
+//   }
+// );
+// user.save();
 
 
 // hash the password
@@ -57,10 +57,13 @@ function checkAuth(req, res, next) {
   next();  // пропускати далі тільки аутентифікованих
 }
 
+
 function checkAdmin(req, res, next) {
-  if (!req.user) res.sendStatus(401); // 'Not authorized'
-  else if (req.user.role !== 'admin') res.sendStatus(403); // 'Forbidden'
-  else next();  // пропускати далі тільки аутентифікованих із роллю 'admin'
+  User.findOne({ _id: req.user }, function(err, user) {
+    if (!user) res.sendStatus(401); // 'Not authorized'
+    else if (user.type !== ADMIN_USER) res.sendStatus(403); // 'Forbidden'
+    next();  // пропускати далі тільки аутентифікованих із роллю 'admin'
+  });
 }
 
 /* GET users listing. */
@@ -78,44 +81,87 @@ router.get('/login', function(req, res, next) {
 });
 
 router.post('/register', function(req, res, next) {
+
   let username = req.body.username;
   let pass = req.body.pass;
   let pass2 = req.body.pass2;
+
+  if (pass.length < 5){
+    res.render('register', { err: "Довжина паролю бути не меньша за 5" });
+    return res;
+  }
+
+  if (username.length < 5){
+    res.render('register', { err: "Довжина нікнейму бути не меньша за 5" });
+    return res;
+  }
 
   if (pass !== pass2){
     res.render('register', { err: "Паролі не співпадають" });
     return res;
   }
 
-  let new_user = new User({
-    username: username,
-    type: REGULAR_USER
+  if (!username.match(/^[a-zA-Z0-9]*$/g)){
+    res.render('register', { err: "Нікнейм повинен складатися лише з букв і цифр" });
+    return res;
+  }
+
+  if (!pass.match(/^[a-zA-Z0-9]*$/g)){
+    res.render('register', { err: "Пароль повинен складатися лише з букв і цифр" });
+    return res;
+  }
+
+  User.findOne({username: req.body.username}, function(err, user) {
+    res.render('register', { err: "Даний нікнейм вже використовується" });
+    return res;
   });
 
-  new_user.pass = generateHash(pass);
-  new_user.save();
-  console.log(new_user);
+  let new_user = new User({
+    username: username,
+    type: REGULAR_USER,
+    pass: generateHash(pass)
+  });
 
-  res.redirect('/');
+  // new_user.pass = generateHash(pass);
+  new_user.save();
+
+  res.redirect('/login');
 });
 
 
-router.post('/login', passport.authenticate('local', { failureRedirect: '/' }), function(req, res) {
-  User.findOne({username: req.body.username}, function(err, user) {
+router.post('/login', passport.authenticate('local', { failureRedirect: '/login' }),  function(req, res) {
 
-    if (!validPassword(req.body.pass, user)) {
-      console.log(user);
+  User.findOne( { username: req.body.username }, function(err, user) {
+    if (!user){
+      res.render('login', { err: "Такий користувач не знайдений" });
+    }
+
+
+    if (validPassword(req.body.pass, user)) {
+      res.redirect('/');
     } else {
-      console.log(user);
+      res.render('login', { err: "Пароль неправильний" });
     }
   });
 });
 
 
-app.get('/logout',
+router.get('/logout',
   (req, res) => {
     req.logout();
     res.redirect('/');
   });
 
+
+router.get('/users', checkAdmin, function(req, res, next) {
+  User.find({}, function(err, users) {
+    render(req, res, 'users', { users: users });
+  });
+});
+
 module.exports = router;
+module.exports.User = User;
+module.exports.validPassword = validPassword;
+module.exports.checkAuth = checkAuth;
+module.exports.checkAdmin = checkAdmin;
+module.exports.render = render;

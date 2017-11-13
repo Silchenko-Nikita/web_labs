@@ -5,20 +5,27 @@ let logger = require('morgan');
 let cookieParser = require('cookie-parser');
 let bodyParser = require('body-parser');
 let bcrypt = require('bcrypt-nodejs');
-let mongoose = require('mongoose');
-const passport = require('passport');
+let passport = require('passport');
+let LocalStrategy = require('passport-local').Strategy;
 
 let index = require('./routes/index');
 let books = require('./routes/books');
 let users = require('./routes/users');
 
 let app = express();
+
+let User = users.User;
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(require('express-session')({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: false
+}));
 app.use(passport.initialize());
 app.use(passport.session());
-
-mongoose.connect('mongodb://nikitos:funnycats@ds149855.mlab.com:49855/heroku_s1fzsv21', { useMongoClient: true });
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -32,21 +39,46 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
 app.use('/', books);
-app.use('/b', books);
-app.get('/books/garry_potter',function(req,res){
-    res.sendFile(path.join(__dirname, 'views', 'books/garry_potter.html'));
+app.use('/', users);
+app.use(express.static(path.join(__dirname, 'public')));
 
-});
-app.get('/books/don_kihot',function(req,res){
-    res.sendFile(path.join(__dirname, 'views', 'books/don_kihot.html'));
 
-});
-app.get('/books/sample_book',function(req,res){
-    res.sendFile(path.join(__dirname, 'views', 'books/sample.html'));
-
+// визначає, яку інформацію зберігати у Cookie сесії
+passport.serializeUser(function(user, done) {
+  // наприклад, зберегти у Cookie сесії id користувача
+  done(null, user.id);
 });
 
 
+// отримує інформацію (id) із Cookie сесії і шукає користувача, що їй відповідає
+passport.deserializeUser(function(id, done) {
+  User.findOne({_id: id}, function(err, user) {
+
+    done(null, user.id);
+  });
+});
+
+// налаштування стратегії для визначення користувача, що виконує логін
+// на основі його username та password
+passport.use(new LocalStrategy({
+    usernameField: 'username',
+    passwordField: 'pass'
+  }, (username, password, done) => {
+  User.findOne({ username: username }, function (err, user) {
+    if (err) { return done(err); }
+    if (!user) {
+      return done(null, false, { message: 'Incorrect username.' });
+    }
+    if (!users.validPassword(password, user)) {
+      return done(null, false, { message: 'Incorrect password.' });
+    }
+    return done(null, user);
+  });
+}));
+
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -67,4 +99,4 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
-module.passport = passport;
+module.exports.passport = passport;
