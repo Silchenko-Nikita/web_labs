@@ -1,0 +1,222 @@
+doctype html
+html
+    title Світ книг
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='stylesheet', href='https://www.w3schools.com/w3css/4/w3.css')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel='shortcut icon', href='/images/books/sample.png')
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js")
+    script(src="https://unpkg.com/vue")
+    script(src="https://code.jquery.com/jquery-3.2.1.min.js")
+    style.
+        body h1,h2,h3,h4,h5,h6 {
+            "Montserrat", sans-serif
+        }
+    body
+        .w3-top
+            .w3-bar.w3-light-grey.w3-white.w3-padding.w3-card-2(style='letter-spacing:4px;')
+                a.w3-bar-item.w3-button(href='/') Головна
+                .w3-right.w3-hide-small
+                    a.w3-bar-item.w3-button(href='/books/add') Додати книгу
+                    if (username)
+                        a.w3-bar-item.w3-button(href='/logout') Вийти (#{username})
+                    else
+                        a.w3-bar-item.w3-button(href='/login') Увійти
+                    a.w3-bar-item.w3-button(href='/#about') Інфо
+        .w3-padding-32
+        .w3-content
+            form(style='padding-left: 16px; padding-right: 16px;', id='search-form' method='get')
+                input.w3-input.w3-col.s9.w3-border(type='text', value=search, name='search')
+                input.w3-button.w3-col.s3.w3-light-grey.w3-border(type='submit', value='Шукати')
+
+            .w3-padding-32
+            form(method='post' style='padding-left: 16px; padding-right: 16px;' id='add-book-form' enctype="multipart/form-data")
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Назва:
+                    input.w3-input.w3-col.s9.w3-border(type='text', name='name', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Автор:
+                    input.w3-input.w3-col.s9.w3-border(type='text', name='author', required)
+                .w3-row
+                    label.w3-col.s2(style='margin: 10px;') Зображення:
+                    input.w3-col.s9(type='file', accept=".jpg,.png,.jpeg" name='img', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Рейтинг:
+                    select.w3-input.w3-col.s9.w3-border(name='rating', required)
+                        option 1
+                        option 2
+                        option 3
+                        option 4
+                        option 5
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Cподобалося:
+                    input.w3-input.w3-col.s9.w3-border(type='number', min='0', value='0', name='likes_num', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Не сподобалося:
+                    input.w3-input.w3-col.s9.w3-border(type='number', min='0', value='0', name='dislikes_num', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Дата публікації:
+                    input.w3-input.w3-col.s9.w3-border(type='date', name='pub_date', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Опис:
+                    textarea.w3-input.w3-col.s9.w3-border(rows='6' minlength=64 name='descr', required)
+                .w3-right-align(style="padding-right: 62px;")
+                    input.w3-button.w3-green.w3-border.w3-round(type='submit', value='Додати')
+
+            .w3-container
+                #success-add-info.w3-modal
+                    .w3-modal-content(style="max-width:450px")
+                        .w3-container(style='padding-top: 24px; padding-bottom: 24px;')
+                            span.w3-button.w3-display-topright(onclick="document.getElementById('success-add-info').style.display='none'") ×
+                            p#succedsss-add-text.w3-center Книга успішно додана
+
+            div(id='books')
+                book(v-for="book in books" v-bind:book="book" v-bind:key="book._id")
+    script.
+      Vue.component('book', {
+        props: ['book'],
+        template: "<div class='w3-row w3-margin'>" +
+                      "<div class='w3-quarter'>" +
+                         "<a :href=\"'/books/' + book._id\">" +
+                             "<img :src=\"'/images/books/' + book.tag + '.jpg'\" style='width:100%; min-height:200px'>" +
+                         "</a>" +
+                     "</div>" +
+                     "<div class='w3-threequarter w3-container'>" +
+                         "<h2>" +
+                             "<a :href=\"'/books/' + book._id\" >{{book.name}}</a>" +
+                         "</h2>" +
+                         "<p style='word-wrap: break-word;'>{{book.descr}}</p>" +
+                         "<div class='w3-right-align'>" +
+                            "<button class='w3-button w3-round w3-red' :id=\"'delete-' + book._id\" :onclick=\"'deleteBook(`' + book._id + '`)'\">" +
+                                "Видалити" +
+                            "</button>" +
+                         "</div>" +
+                     "</div>" +
+                  "</div>"
+      })
+
+
+      let totalBooksNum = 0;
+      let booksPerPage = 0;
+      var app = new Vue({
+          el: '#books',
+          data: {
+            books: []
+          },
+          created: function () {
+            let v_app = this;
+            let booksList = document.getElementById('books')
+            let xhttpGetBooks = new XMLHttpRequest();
+            let page = 0;
+            let totalPages = 0;
+            let lockRequest = false
+
+            xhttpGetBooks.onreadystatechange = function () {
+              if (this.readyState === 4 && this.status === 200) {
+                let data = JSON.parse(this.responseText);
+                totalBooksNum = data['total_entities_num'];
+                booksPerPage = data['entities_per_page'];
+                page = data['page'];
+
+                for(book of data.entities){
+                  v_app.books.push(book);
+                }
+
+                if (data.entities.length > 0){
+                  page++;
+                }
+              }
+              lockRequest = false;
+            };
+            searchBooks('');
+
+            function searchBooks(name) {
+              if (lockRequest) return;
+
+              lockRequest = true;
+              xhttpGetBooks.open("GET", "/api/v1/books?p=" + page + (name ? ("&name=" + name) : ''), true);
+              xhttpGetBooks.setRequestHeader("Authorization", "#{auth_token}");
+              xhttpGetBooks.send();
+            };
+
+            window.onscroll = function () {
+              if (window.pageYOffset + window.innerHeight > booksList.getBoundingClientRect().bottom) {
+                if (page < Math.ceil(totalBooksNum / booksPerPage)) {
+                  searchBooks();
+                }
+              }
+            }
+
+            let searchForm = document.getElementById('search-form');
+            searchForm.onsubmit = function (e) {
+              v_app.books = [];
+              page = 0;
+              e.preventDefault();
+              let searchInput = searchForm.querySelector('input[name=search]');
+              searchBooks(encodeURI(searchInput.value));
+            }
+          }
+        })
+
+      let xhttp_delete = new XMLHttpRequest();
+
+      function deleteBook(_id) {
+        xhttp_delete.onreadystatechange = function () {
+          if (this.readyState === 4 && this.status === 200) {
+            app.books = app.books.filter(book => book._id !== _id);
+            totalBooksNum--;
+          }
+        };
+
+        xhttp_delete.open("DELETE", "/api/v1/books/" + _id, true);
+        xhttp_delete.setRequestHeader("Authorization", "#{auth_token}");
+        xhttp_delete.send();
+      };
+
+      let addBookForm$ = $('#add-book-form')
+      let addBookForm = addBookForm$[0]
+      let formData = {};
+
+      var xhttpForm = new XMLHttpRequest();
+      var xhttpAddBook = new XMLHttpRequest();
+
+
+      xhttpAddBook.onreadystatechange = function () {
+        if (this.readyState === 4) {
+          let data = JSON.parse(this.responseText);
+          if (this.status === 400) {
+            document.getElementById('succedsss-add-text').innerHTML = 'Неправильні дані: ' + data.error;
+          } else if (this.status === 201) {
+            totalBooksNum++;
+            app.books.push(data);
+            document.getElementById('succedsss-add-text').innerHTML = 'Книга "' + data.name + '" успішно додана!';
+          }
+          document.getElementById('success-add-info').style.display = 'block';
+        }
+      };
+
+      xhttpForm.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 201) {
+          let data = JSON.parse(this.responseText);
+          let sA = addBookForm$.serializeArray();
+          for (obj of sA) {
+            formData[obj.name] = obj.value;
+          }
+          formData.rating = Number(formData.rating);
+          formData.likes_num = Number(formData.likes_num);
+          formData.dislikes_num = Number(formData.dislikes_num);
+          formData.tag = data.tag
+
+          xhttpAddBook.open("POST", "/api/v1/books");
+          xhttpAddBook.setRequestHeader("Authorization", "#{auth_token}");
+          xhttpAddBook.setRequestHeader("Content-Type", "application/json");
+          xhttpAddBook.send(JSON.stringify(formData));
+        }
+      };
+
+      addBookForm.onsubmit = function (e) {
+        e.preventDefault();
+        xhttpForm.open("POST", "/api/v1/books/images");
+        xhttpForm.setRequestHeader("Authorization", "#{auth_token}");
+        xhttpForm.send(new FormData(addBookForm));
+      }

@@ -1,59 +1,16 @@
-let express = require('express');
-let mongoose = require('mongoose');
-let passport = require('passport');
-let passportLocalMongoose = require('passport-local-mongoose');
-let bcrypt = require('bcrypt-nodejs');
+const express = require('express');
+const passport = require('passport');
 
-function render(req, res, viewname, extra) {
-  User.findOne({ _id: req.user }, function(err, user) {
-    extra = extra || {};
-    if (user) {
-      extra.username = user.username;
-    }
-    res.render(viewname, extra);
-  });
-}
+const configs = require('../configs');
+const utils = require('../utils');
+const users_db = require('../db/users');
 
+let User = users_db.User;
+const REGULAR_USER = users_db.REGULAR_USER;
+const ADMIN_USER = users_db.ADMIN_USER;
+
+let render = utils.render;
 let router = express.Router();
-mongoose.connect('mongodb://nikitos:funnycats@ds149855.mlab.com:49855/heroku_s1fzsv21', { useMongoClient: true });
-
-const REGULAR_USER = 1;
-const ADMIN_USER = 2;
-
-let userSchema = new mongoose.Schema({
-  username: String,
-  pass: String,
-  type: Number
-});
-
-userSchema.plugin(passportLocalMongoose);
-let User = mongoose.model('user', userSchema);
-
-
-// hash the password
-function generateHash(password) {
-  return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
-}
-
-// checking if password is valid
-function validPassword(password, user) {
-  return bcrypt.compareSync(password, user.pass);
-}
-
-
-function checkAuth(req, res, next) {
-  if (!req.user) return res.sendStatus(401); // 'Not authorized'
-  next();  // пропускати далі тільки аутентифікованих
-}
-
-
-function checkAdmin(req, res, next) {
-  User.findOne({ _id: req.user }, function(err, user) {
-    if (!user) res.sendStatus(401); // 'Not authorized'
-    else if (user.type !== ADMIN_USER) res.sendStatus(403); // 'Forbidden'
-    next();  // пропускати далі тільки аутентифікованих із роллю 'admin'
-  });
-}
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -108,10 +65,9 @@ router.post('/register', function(req, res, next) {
   let new_user = new User({
     username: username,
     type: REGULAR_USER,
-    pass: generateHash(pass)
+    pass: utils.generateHash(pass)
   });
 
-  // new_user.pass = generateHash(pass);
   new_user.save();
 
   res.redirect('/login');
@@ -126,7 +82,7 @@ router.post('/login', passport.authenticate('local', { failureRedirect: '/login'
     }
 
 
-    if (validPassword(req.body.pass, user)) {
+    if (utils.validPassword(req.body.pass, user)) {
       res.redirect('/');
     } else {
       res.render('login', { err: "Пароль неправильний" });
@@ -142,15 +98,10 @@ router.get('/logout',
   });
 
 
-router.get('/users', checkAdmin, function(req, res, next) {
+router.get('/users', utils.checkAdmin, function(req, res, next) {
   User.find({}, function(err, users) {
     render(req, res, 'users', { users: users });
   });
 });
 
 module.exports = router;
-module.exports.User = User;
-module.exports.validPassword = validPassword;
-module.exports.checkAuth = checkAuth;
-module.exports.checkAdmin = checkAdmin;
-module.exports.render = render;

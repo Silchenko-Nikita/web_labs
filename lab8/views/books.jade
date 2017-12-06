@@ -1,0 +1,115 @@
+doctype html
+html
+    title Світ книг
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='stylesheet', href='https://www.w3schools.com/w3css/4/w3.css')
+    link(rel='shortcut icon', href='/images/books/sample.png')
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js")
+    style.
+        body h1,h2,h3,h4,h5,h6 {
+            "Montserrat", sans-serif
+        }
+    body
+        .w3-top
+            .w3-bar.w3-light-grey.w3-white.w3-padding.w3-card-2(style='letter-spacing:4px;')
+                a.w3-bar-item.w3-button(href='/') Головна
+                .w3-right.w3-hide-small
+                    a.w3-bar-item.w3-button(href='/books/add') Додати книгу
+                    if (username)
+                        a.w3-bar-item.w3-button(href='/logout') Вийти (#{username})
+                    else
+                        a.w3-bar-item.w3-button(href='/login') Увійти
+                    a.w3-bar-item.w3-button(href='/#about') Інфо
+        .w3-padding-32
+        .w3-content
+            form(style='padding-left: 16px; padding-right: 16px;', id='search-form' method='get')
+                input.w3-input.w3-col.s6.w3-border(type='text', value=search, name='search')
+                input.w3-button.w3-col.s3.w3-light-grey.w3-border(type='submit', value='Шукати')
+                .w3-right-align
+                    a(href='/books/add')
+                        input.w3-button.w3-green.w3-border.w3-round(type='button', value='Додати')
+
+            div(id='books')
+            //for book in books
+            //    .w3-row.w3-margin
+            //        .w3-quarter
+            //            a(href='/books/' + book['_id'])
+            //                img(src='/images/books/' + book['tag'] + '.jpg', style='width:100%;min-height:200px')
+            //        .w3-threequarter.w3-container
+            //            h2
+            //                a(href='/books/' + book['_id'])= book['name']
+            //            p= book['descr']
+
+            //.w3-bar.w3-center(style='padding-bottom: 8px;')
+            //    if (has_prev_page)
+            //        a.w3-button.w3-light-grey.w3-border.w3-round(href='?search=' + search + '&p=' + (page - 1))  «
+            //    if (has_next_page)
+            //        a.w3-button.w3-light-grey.w3-border.w3-round(href='?search=' + search + '&p=' + (page + 1)) »
+    script.
+       let booksList = document.getElementById('books')
+       let xhttp = new XMLHttpRequest();
+       let page = 0;
+       let totalPages = 0;
+       let lockRequest = false
+
+       xhttp.onreadystatechange = function () {
+         if (this.readyState === 4 && this.status === 200) {
+           let data = this.responseText;
+           let jsonData = JSON.parse(data);
+           totalPages = Math.ceil(jsonData['total_entities_num'] / jsonData['entities_per_page']);
+           page = jsonData['page'];
+
+           let output = Mustache.render(
+             "{{#entities}}" +
+                 "<div class='w3-row w3-margin'>" +
+                     "<div class='w3-quarter'>" +
+                        "<a href='/books/{{_id}}'>" +
+                            "<img src='/images/books/{{tag}}.jpg' style='width:100%; min-height:200px'>" +
+                        "</a>" +
+                    "</div>" +
+                    "<div class='w3-threequarter w3-container'>" +
+                        "<h2>" +
+                            "<a href='/books/{{_id}}'>{{name}}</a>" +
+                        "</h2>" +
+                        "<p style='word-wrap: break-word;'>{{descr}}</p>" +
+                    "</div>" +
+                 "</div>" +
+             "{{/entities}}", jsonData);
+           if (page){
+             booksList.innerHTML += output;
+           } else {
+             booksList.innerHTML = output;
+           }
+           page++;
+         }
+         lockRequest = false;
+       };
+
+       function searchBooks(name) {
+         if (lockRequest) return;
+
+         lockRequest = true;
+         xhttp.open("GET", "/api/v1/books?p=" + page + (name ? ("&name=" + name) : ''), true);
+         xhttp.setRequestHeader("Authorization", "#{auth_token}");
+         xhttp.send();
+       };
+
+       window.onload = function () {
+         searchBooks('');
+       }
+
+       window.onscroll = function () {
+         if (window.pageYOffset + window.innerHeight > booksList.getBoundingClientRect().bottom) {
+           if (page < totalPages){
+             searchBooks();
+           }
+         }
+       }
+
+       let searchForm = document.getElementById('search-form');
+       searchForm.onsubmit = function (e) {
+         page = 0;
+         e.preventDefault();
+         let searchInput = searchForm.querySelector('input[name=search]');
+         searchBooks(encodeURI(searchInput.value));
+       }

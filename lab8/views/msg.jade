@@ -1,0 +1,26 @@
+doctype html
+html
+    meta(charset='UTF-8')
+    title Світ книг
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='stylesheet', href='/stylesheets/w3.css')
+    link(rel='shortcut icon', href='/images/books/sample.png')
+    link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")
+    style.
+        body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
+        .w3-row-padding img {margin-bottom: 12px}
+    body
+        .w3-top
+            .w3-bar.w3-light-grey.w3-white.w3-padding.w3-card-2(style='letter-spacing:4px;')
+                a.w3-bar-item.w3-button(href='/') Головна
+                .w3-right.w3-hide-small
+                    if (username)
+                        a.w3-bar-item.w3-button(href='/books/') Список книг
+                        a.w3-bar-item.w3-button(href='/books/add') Додати книгу
+                        a.w3-bar-item.w3-button(href='/logout') Вийти (#{username})
+                    else
+                        a.w3-bar-item.w3-button(href='/login') Увійти
+                    a.w3-bar-item.w3-button(href='/#about') Інфо
+        .w3-padding-32
+        .w3-content
+            b= msg

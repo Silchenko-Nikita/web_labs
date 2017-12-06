@@ -1,0 +1,63 @@
+doctype html
+html
+    meta(charset='UTF-8')
+    title Світ книг
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='stylesheet', href='/stylesheets/w3.css')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel='shortcut icon', href='/images/books/sample.png')
+    link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")
+    style.
+        body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
+        .w3-row-padding img {margin-bottom: 12px}
+    body
+        .w3-top
+            .w3-bar.w3-light-grey.w3-white.w3-padding.w3-card-2(style='letter-spacing:4px;')
+                a.w3-bar-item.w3-button(href='/') Головна
+                .w3-right.w3-hide-small
+                    a.w3-bar-item.w3-button(href='/books/') Список книг
+                    if (username)
+                        a.w3-bar-item.w3-button(href='/logout') Вийти (#{username})
+                    else
+                        a.w3-bar-item.w3-button(href='/login') Увійти
+                    a.w3-bar-item.w3-button(href='/#about') Інфо
+        .w3-padding-32
+        .w3-content
+            form(method='post' name='add-book-form' enctype="multipart/form-data")
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Назва:
+                    input.w3-input.w3-col.s9.w3-border(type='text', name='name', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Автор:
+                    input.w3-input.w3-col.s9.w3-border(type='text', name='author', required)
+                .w3-row
+                    label.w3-col.s2(style='margin: 10px;') Зображення:
+                    input.w3-col.s9(type='file', accept=".jpg,.png,.jpeg" name='img', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Рейтинг:
+                    select.w3-input.w3-col.s9.w3-border(name='rating', required)
+                        option 1
+                        option 2
+                        option 3
+                        option 4
+                        option 5
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Cподобалося:
+                    input.w3-input.w3-col.s9.w3-border(type='number', min='0', value='0', name='likes_num', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Не сподобалося:
+                    input.w3-input.w3-col.s9.w3-border(type='number', min='0', value='0', name='dislikes_num', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Дата публікації:
+                    input.w3-input.w3-col.s9.w3-border(type='date', name='pub_date', required)
+                .w3-row(style="padding-bottom: 4px;")
+                    label.w3-col.s2(style='margin: 10px;') Опис:
+                    textarea.w3-input.w3-col.s9.w3-border(rows='6' minlength=64 name='descr', required)
+                if (err)
+                    .w3-row
+                        div.w3-col.s2(style='margin: 10px;')
+                        .w3-text-red.w3-col.s9.w3-middle
+                            p= err
+                .w3-row
+                    .w3-right-align(style="padding-right: 62px;")
+                        input(type='submit' value="Підтвердити")
